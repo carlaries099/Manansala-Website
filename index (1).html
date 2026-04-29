@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manansalo Cart — Specialty Coffee & Tea</title>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+
+:root {
+  --pine:     #1C2B1A;
+  --forest:   #2E4A2B;
+  --moss:     #4A6E45;
+  --sage:     #8AAF82;
+  --mist:     #EDF3EB;
+  --cream:    #FAF8F2;
+  --warm:     #F5EDD8;
+  --amber:    #C4852A;
+  --text:     #1C2B1A;
+  --muted:    #6B7E68;
+  --border:   rgba(74,110,69,0.18);
+  --shadow:   0 8px 32px rgba(28,43,26,0.1);
+  --white:    #ffffff;
+  --card:     #FDFBF7;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  line-height: 1.65;
+}
+
+#navbar {
+  position: sticky; top:0; z-index:200;
+  background: var(--pine);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2.5rem;
+  height: 66px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+}
+.logo {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 1.45rem;
+  color: var(--mist);
+  letter-spacing: 0.5px;
+}
+.logo span { color: var(--sage); font-style: italic; }
+
+.nav-links { display:flex; gap:2rem; list-style:none; }
+.nav-links a {
+  color: rgba(237,243,235,0.6);
+  text-decoration: none;
+  font-size: 0.87rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-weight: 400;
+  transition: color 0.2s;
+  padding-bottom: 3px;
+  border-bottom: 1.5px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.nav-links a:hover,
+.nav-links a.active { color: var(--sage); border-color: var(--sage); }
+
+.cart-btn {
+  background: var(--moss);
+  color: var(--mist);
+  border: none;
+  padding: 9px 20px;
+  border-radius: 4px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.87rem;
+  font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.cart-btn:hover { background: var(--forest); transform: translateY(-1px); }
+
+.cart-badge {
+  background: var(--amber);
+  color: var(--white);
+  border-radius: 50%;
+  width: 20px; height: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.3s;
+}
+.cart-badge.bump { transform: scale(1.5); }
+
+.cart-overlay {
+  position: fixed; inset:0;
+  background: rgba(0,0,0,0.45);
+  z-index:300; opacity:0; pointer-events:none;
+  transition: opacity 0.3s;
+}
+.cart-overlay.show { opacity:1; pointer-events:all; }
+
+.cart-sidebar {
+  position: fixed; top:0; right:0;
+  width: 370px; max-width: 95vw; height:100vh;
+  background: var(--white);
+  z-index:400;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: -6px 0 28px rgba(0,0,0,0.18);
+}
+.cart-sidebar.open { transform: translateX(0); }
+
+.cart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: var(--pine);
+}
+.cart-header h2 {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 1.3rem; color: var(--mist);
+}
+.close-cart {
+  background: none; border: none;
+  color: var(--sage); font-size: 1.1rem;
+  cursor: pointer; padding: 4px 8px; border-radius: 4px;
+  transition: color 0.2s;
+}
+.close-cart:hover { color: var(--mist); }
+
+.cart-items { flex:1; overflow-y:auto; padding: 1rem; }
+.cart-empty {
+  height: 100%; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:1rem;
+  color: var(--muted);
+}
+.empty-icon { font-size: 3rem; }
+.cart-empty p { text-align:center; font-size:0.93rem; line-height:1.6; }
+
+.cart-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px;
+  background: var(--mist);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  animation: slideIn 0.3s ease;
+}
+@keyframes slideIn {
+  from { opacity:0; transform:translateX(16px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+.ci-emoji { font-size: 1.8rem; flex-shrink:0; }
+.ci-info { flex:1; }
+.ci-name { font-size:0.9rem; font-weight:500; color:var(--text); }
+.ci-sub  { font-size:0.78rem; color:var(--muted); margin-top:2px; }
+.ci-controls { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.qty-btn {
+  background: var(--pine); color: var(--mist);
+  border:none; width:24px; height:24px; border-radius:4px;
+  cursor:pointer; font-size:1rem;
+  display:flex; align-items:center; justify-content:center;
+  transition: background 0.2s;
+}
+.qty-btn:hover { background: var(--moss); }
+.qty-num { font-size:0.9rem; font-weight:500; min-width:18px; text-align:center; }
+.rm-btn {
+  background:none; border:none; color:#c44;
+  font-size:0.8rem; cursor:pointer; padding:3px;
+}
+.rm-btn:hover { color:#a22; }
+
+.cart-footer { padding:1.25rem; border-top:1px solid var(--border); }
+.cart-total-row {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:1.05rem; font-weight:500;
+  padding-bottom:1rem; margin-bottom:1rem;
+  border-bottom:1px solid var(--border);
+}
+#cart-total { font-family:'Libre Baskerville',serif; font-size:1.3rem; color:var(--amber); }
+.checkout-btn {
+  width:100%; background:var(--pine); color:var(--mist);
+  border:none; padding:13px;
+  border-radius:4px; font-family:'Outfit',sans-serif;
+  font-size:0.95rem; font-weight:500;
+  cursor:pointer; margin-bottom:8px;
+  transition: background 0.2s;
+}
+.checkout-btn:hover { background: var(--moss); }
+.clear-btn {
+  width:100%; background:none; color:var(--muted);
+  border:1px solid var(--border);
+  padding:9px; border-radius:4px;
+  font-family:'Outfit',sans-serif; font-size:0.85rem;
+  cursor:pointer; transition: all 0.2s;
+}
+.clear-btn:hover { border-color:#c44; color:#c44; }
+
+.page { display:none; animation: pageIn 0.35s ease; }
+.page.active { display:block; }
+@keyframes pageIn {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.btn-primary {
+  background: var(--moss);
+  color: var(--white);
+  border:none; padding:13px 28px; border-radius:4px;
+  font-family:'Outfit',sans-serif; font-size:0.95rem; font-weight:500;
+  cursor:pointer; transition: background 0.2s, transform 0.15s;
+  letter-spacing:0.3px;
+}
+.btn-primary:hover { background: var(--forest); transform: translateY(-2px); }
+.btn-primary.full-width { width:100%; }
+.btn-ghost {
+  background:transparent; color:var(--mist);
+  border:1.5px solid rgba(237,243,235,0.35);
+  padding:13px 28px; border-radius:4px;
+  font-family:'Outfit',sans-serif; font-size:0.95rem;
+  cursor:pointer; transition:all 0.2s;
+}
+.btn-ghost:hover { border-color:var(--sage); color:var(--sage); }
+
+.hero-tag {
+  display:inline-block;
+  background: rgba(138,175,130,0.18);
+  color:var(--sage);
+  font-size:0.75rem; letter-spacing:2px; text-transform:uppercase;
+  padding:6px 16px; border-radius:20px;
+  border:1px solid rgba(138,175,130,0.35);
+  margin-bottom:1.5rem;
+}
+
+.hero {
+  background: var(--pine);
+  min-height:88vh;
+  display:flex; align-items:center;
+  padding: 5rem 4rem;
+  gap: 3rem;
+  position:relative; overflow:hidden;
+}
+.hero-bg-text {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-family:'Libre Baskerville',serif;
+  font-size: clamp(8rem,18vw,18rem);
+  color: rgba(138,175,130,0.05);
+  white-space:nowrap; pointer-events:none; user-select:none;
+  letter-spacing:0.2em;
+}
+.hero-content { max-width:560px; z-index:1; }
+.hero h1 {
+  font-family:'Libre Baskerville',serif;
+  font-size: clamp(2.8rem,5.5vw,4.5rem);
+  color:var(--mist); line-height:1.08;
+  margin-bottom:1.5rem;
+}
+.hero h1 em { color:var(--sage); font-style:italic; }
+.hero p { color:rgba(237,243,235,0.6); font-size:1.05rem; line-height:1.8; margin-bottom:2.5rem; }
+.hero-btns { display:flex; gap:1rem; flex-wrap:wrap; }
+
+.hero-right { z-index:1; flex-shrink:0; }
+.drink-showcase { display:flex; flex-direction:column; gap:1rem; }
+.drink-card-float {
+  display:flex; align-items:center; gap:12px;
+  background: rgba(237,243,235,0.07);
+  border:1px solid rgba(138,175,130,0.25);
+  border-radius:12px;
+  padding:14px 20px;
+  backdrop-filter:blur(4px);
+  animation: floatCard 4s ease-in-out infinite;
+  width:240px;
+}
+.dc1 { animation-delay:0s; }
+.dc2 { animation-delay:1.3s; }
+.dc3 { animation-delay:2.6s; }
+@keyframes floatCard {
+  0%,100% { transform:translateY(0); }
+  50%      { transform:translateY(-6px); }
+}
+.dc-emoji { font-size:1.8rem; }
+.dc-name { color:var(--mist); font-size:0.88rem; font-weight:500; }
+
+.home-perks {
+  max-width:1100px; margin:0 auto;
+  padding:5rem 2rem;
+}
+.perks-label {
+  font-size:0.72rem; text-transform:uppercase; letter-spacing:3px;
+  color:var(--moss); font-weight:500; margin-bottom:0.75rem;
+}
+.perks-title {
+  font-family:'Libre Baskerville',serif;
+  font-size: clamp(1.8rem,3.5vw,2.6rem);
+  color:var(--pine); margin-bottom:3rem;
+}
+.perks-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1.5rem;
+}
+.perk-card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px; padding:2rem 1.5rem;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.perk-card:hover { transform:translateY(-4px); box-shadow:var(--shadow); }
+.perk-icon { font-size:2rem; margin-bottom:1rem; }
+.perk-card h3 { font-family:'Libre Baskerville',serif; font-size:1.15rem; margin-bottom:0.5rem; }
+.perk-card p { color:var(--muted); font-size:0.9rem; line-height:1.7; }
+
+.strip-band {
+  background:var(--forest);
+  padding:1rem 0; overflow:hidden;
+}
+.strip-inner {
+  display:flex; gap:2rem; align-items:center;
+  white-space:nowrap;
+  animation: ticker 18s linear infinite;
+}
+.strip-inner span { color:var(--sage); font-size:0.85rem; letter-spacing:1px; text-transform:uppercase; }
+.strip-inner .dot { color:var(--amber); }
+@keyframes ticker {
+  from { transform:translateX(0); }
+  to   { transform:translateX(-50%); }
+}
+
+.home-cta { padding:5rem 2rem; text-align:center; }
+.cta-inner { max-width:560px; margin:0 auto; }
+.cta-emoji { font-size:3rem; margin-bottom:1rem; }
+.home-cta h2 { font-family:'Libre Baskerville',serif; font-size:2rem; margin-bottom:1rem; }
+.home-cta p { color:var(--muted); margin-bottom:2rem; }
+
+.page-hero {
+  padding:6rem 2.5rem; text-align:center;
+}
+.page-hero h1 {
+  font-family:'Libre Baskerville',serif;
+  font-size: clamp(2.4rem,5vw,3.8rem);
+  line-height:1.1; margin-top:0.75rem; margin-bottom:1rem;
+}
+.page-hero p { font-size:1rem; max-width:520px; margin:0 auto; }
+
+.about-hero   { background:var(--mist); color:var(--pine); }
+.about-hero p { color:var(--muted); }
+.about-hero .hero-tag { color:var(--moss); background:rgba(74,110,69,0.1); border-color:rgba(74,110,69,0.25); }
+
+.menu-hero    { background:var(--pine); color:var(--mist); }
+.menu-hero p  { color:rgba(237,243,235,0.65); }
+
+.contact-hero { background:var(--warm); color:var(--pine); }
+.contact-hero p { color:var(--muted); }
+.contact-hero .hero-tag { color:var(--moss); background:rgba(74,110,69,0.1); border-color:rgba(74,110,69,0.25); }
+
+.checkout-hero { background:var(--forest); color:var(--mist); }
+.checkout-hero p { color:rgba(237,243,235,0.65); }
+
+.about-body { max-width:1100px; margin:0 auto; padding:5rem 2rem; }
+.about-grid {
+  display:grid; grid-template-columns:1fr 1.2fr; gap:4rem;
+  align-items:center; margin-bottom:5rem;
+}
+.about-img {
+  background:var(--pine); border-radius:16px;
+  height:380px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:1rem;
+}
+.about-big-emoji { font-size:6rem; }
+.about-img-caption {
+  font-size:0.75rem; letter-spacing:2px; text-transform:uppercase;
+  color:var(--sage);
+}
+.about-section-label {
+  font-size:0.72rem; text-transform:uppercase; letter-spacing:3px;
+  color:var(--moss); margin-bottom:0.75rem;
+}
+.about-text h2 {
+  font-family:'Libre Baskerville',serif; font-size:1.9rem; line-height:1.2;
+  margin-bottom:1.25rem;
+}
+.about-text p { color:var(--muted); line-height:1.85; margin-bottom:1rem; font-size:0.95rem; }
+
+.sourcing-block { margin-top:2rem; }
+.sourcing-block h2 {
+  font-family:'Libre Baskerville',serif; font-size:2rem; margin-bottom:2rem;
+}
+.source-cards {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem;
+}
+.source-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:1.75rem 1.5rem;
+}
+.source-icon { font-size:1.8rem; margin-bottom:0.75rem; }
+.source-card h4 { font-size:1rem; font-weight:500; color:var(--pine); margin-bottom:0.5rem; }
+.source-card p  { font-size:0.88rem; color:var(--muted); line-height:1.65; }
+
+/* History Timeline */
+.history-block { margin-top:4rem; }
+.history-block h2 {
+  font-family:'Libre Baskerville',serif; font-size:2rem; margin-bottom:0.5rem;
+}
+.history-sub { color:var(--muted); font-size:0.93rem; margin-bottom:2.5rem; }
+.timeline {
+  position:relative;
+  padding-left: 2rem;
+}
+.timeline::before {
+  content:'';
+  position:absolute; left:0; top:0; bottom:0;
+  width:2px; background: linear-gradient(to bottom, var(--moss), var(--sage), rgba(138,175,130,0.1));
+  border-radius:2px;
+}
+.timeline-item {
+  position:relative;
+  margin-bottom:2.5rem;
+  padding-left:1.5rem;
+}
+.timeline-item::before {
+  content:'';
+  position:absolute; left:-2.5rem; top:6px;
+  width:14px; height:14px;
+  background:var(--moss); border:3px solid var(--cream);
+  border-radius:50%;
+  box-shadow: 0 0 0 2px var(--moss);
+}
+.timeline-year {
+  font-size:0.72rem; text-transform:uppercase; letter-spacing:2.5px;
+  color:var(--moss); font-weight:500; margin-bottom:0.3rem;
+}
+.timeline-item h4 {
+  font-family:'Libre Baskerville',serif; font-size:1.1rem;
+  color:var(--pine); margin-bottom:0.4rem;
+}
+.timeline-item p { font-size:0.9rem; color:var(--muted); line-height:1.7; }
+
+.menu-section { max-width:1100px; margin:0 auto; padding:3rem 2rem 5rem; }
+
+.menu-filter-bar {
+  display:flex; gap:8px; flex-wrap:wrap; margin-bottom:2.5rem;
+}
+.filter-btn {
+  background:var(--card); border:1.5px solid var(--border);
+  color:var(--muted); padding:9px 20px; border-radius:20px;
+  font-family:'Outfit',sans-serif; font-size:0.87rem;
+  cursor:pointer; transition:all 0.2s;
+}
+.filter-btn:hover { border-color:var(--moss); color:var(--pine); }
+.filter-btn.active { background:var(--pine); border-color:var(--pine); color:var(--mist); }
+
+.menu-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.5rem;
+}
+.menu-card {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:14px; overflow:hidden;
+  transition:transform 0.25s, box-shadow 0.25s;
+}
+.menu-card:hover { transform:translateY(-4px); box-shadow:var(--shadow); }
+.menu-card-img {
+  height:180px; display:flex; align-items:center; justify-content:center;
+  font-size:4rem; position:relative; overflow:hidden;
+}
+.menu-card-img img {
+  width:100%; height:100%; object-fit:cover;
+  display:block; transition: transform 0.4s ease;
+}
+.menu-card:hover .menu-card-img img { transform: scale(1.05); }
+.menu-card-badge {
+  position:absolute; top:10px; right:10px;
+  background:var(--pine); color:var(--sage);
+  font-size:0.68rem; letter-spacing:1px; text-transform:uppercase;
+  padding:4px 10px; border-radius:20px;
+}
+.menu-card-body { padding:1.25rem; }
+.menu-card-cat {
+  font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px;
+  color:var(--moss); font-weight:500; margin-bottom:0.35rem;
+}
+.menu-card-body h3 {
+  font-family:'Libre Baskerville',serif; font-size:1.15rem;
+  color:var(--pine); margin-bottom:0.4rem;
+}
+.menu-card-body p { color:var(--muted); font-size:0.87rem; line-height:1.6; margin-bottom:1rem; }
+.menu-card-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1rem; }
+.menu-tag {
+  background:var(--mist); color:var(--muted);
+  font-size:0.7rem; padding:3px 10px; border-radius:20px;
+  border:1px solid var(--border);
+}
+.menu-card-footer {
+  display:flex; align-items:center; justify-content:space-between;
+  padding-top:1rem; border-top:1px solid var(--border);
+}
+.menu-price {
+  font-family:'Libre Baskerville',serif; font-size:1.3rem;
+  color:var(--pine); font-weight:700;
+}
+.menu-price small { font-family:'Outfit',sans-serif; font-size:0.72rem; color:var(--muted); font-weight:400; }
+.add-btn {
+  background:var(--pine); color:var(--mist);
+  border:none; padding:9px 18px; border-radius:4px;
+  font-family:'Outfit',sans-serif; font-size:0.84rem;
+  cursor:pointer; transition:background 0.2s, transform 0.1s;
+}
+.add-btn:hover { background:var(--moss); transform:scale(1.04); }
+
+.contact-body { max-width:1100px; margin:0 auto; padding:5rem 2rem; }
+.contact-grid { display:grid; grid-template-columns:1fr 1.4fr; gap:4rem; }
+
+.contact-left h2 {
+  font-family:'Libre Baskerville',serif; font-size:1.7rem; margin-bottom:1.5rem;
+}
+.location-cards { display:flex; flex-direction:column; gap:10px; margin-bottom:2rem; }
+.location-card {
+  background:var(--mist); border:1px solid var(--border);
+  border-radius:10px; padding:14px 16px;
+}
+.loc-day { font-size:0.7rem; text-transform:uppercase; letter-spacing:2px; color:var(--moss); font-weight:500; margin-bottom:4px; }
+.loc-name { font-size:0.95rem; font-weight:500; color:var(--pine); }
+.loc-time { font-size:0.82rem; color:var(--muted); margin-top:2px; }
+
+.contact-info-list { display:flex; flex-direction:column; gap:1rem; margin-bottom:1.5rem; }
+.info-row { display:flex; align-items:flex-start; gap:12px; }
+.info-ico {
+  width:38px; height:38px; background:var(--mist); border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem; flex-shrink:0;
+}
+.info-label { font-size:0.72rem; text-transform:uppercase; letter-spacing:2px; color:var(--moss); margin-bottom:3px; }
+.info-val { font-size:0.92rem; color:var(--pine); }
+
+.social-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; }
+.social-btn {
+  background:var(--pine); color:var(--sage); border:none;
+  padding:9px 16px; border-radius:4px;
+  font-family:'Outfit',sans-serif; font-size:0.82rem;
+  cursor:pointer; transition:background 0.2s;
+}
+.social-btn:hover { background:var(--moss); color:var(--mist); }
+
+.map-box {
+  background:var(--mist); border:1px solid var(--border);
+  border-radius:12px; height:170px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px;
+}
+.map-box div { font-size:2.5rem; }
+.map-box p { color:var(--forest); font-size:0.9rem; }
+.map-sub { font-size:0.78rem !important; color:var(--muted) !important; }
+
+.contact-form-box {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:16px; padding:2.5rem; box-shadow:var(--shadow);
+}
+.contact-form-box h2 {
+  font-family:'Libre Baskerville',serif; font-size:1.7rem; margin-bottom:0.5rem;
+}
+.form-sub { color:var(--muted); font-size:0.88rem; margin-bottom:1.5rem; }
+
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-group { margin-bottom:1.1rem; }
+.form-group label {
+  display:block; font-size:0.82rem; font-weight:500;
+  color:var(--pine); margin-bottom:0.4rem;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width:100%; padding:11px 14px;
+  border:1.5px solid rgba(74,110,69,0.22);
+  border-radius:6px;
+  font-family:'Outfit',sans-serif; font-size:0.92rem;
+  color:var(--text); background:var(--cream); outline:none;
+  transition:border-color 0.2s;
+}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus { border-color:var(--moss); }
+.form-group textarea { height:120px; resize:vertical; }
+
+.success-msg {
+  display:none; background:rgba(74,110,69,0.1);
+  color:var(--forest); border:1px solid rgba(74,110,69,0.3);
+  border-radius:8px; padding:1rem; margin-top:1rem;
+  text-align:center; font-size:0.92rem;
+}
+
+.checkout-section { max-width:1100px; margin:0 auto; padding:3rem 2rem 5rem; }
+
+.checkout-steps {
+  display:flex; align-items:center; justify-content:center;
+  gap:0; margin-bottom:3rem;
+}
+.step { display:flex; flex-direction:column; align-items:center; gap:5px; }
+.step-num {
+  width:36px; height:36px; border-radius:50%;
+  background:var(--mist); color:var(--muted);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:500; font-size:0.88rem;
+  transition:background 0.3s, color 0.3s;
+}
+.step.active .step-num { background:var(--moss); color:var(--white); }
+.step.done   .step-num { background:var(--amber); color:var(--white); }
+.step-lbl { font-size:0.75rem; color:var(--muted); }
+.step.active .step-lbl { color:var(--moss); font-weight:500; }
+.step-line {
+  flex:1; height:1.5px; background:var(--mist);
+  max-width:80px; margin:0 8px; margin-bottom:20px;
+  transition:background 0.3s;
+}
+.step-line.done { background:var(--amber); }
+
+.checkout-layout {
+  display:grid; grid-template-columns:1fr 320px;
+  gap:3rem; align-items:start;
+}
+.co-panel { display:none; animation:pageIn 0.3s ease; }
+.co-panel.active { display:block; }
+
+.step-title {
+  font-family:'Libre Baskerville',serif; font-size:1.7rem;
+  color:var(--pine); margin-bottom:1.75rem;
+  padding-bottom:0.75rem; border-bottom:1px solid var(--border);
+}
+
+.pickup-options { margin-top:1.5rem; }
+.pickup-label {
+  font-size:0.72rem; text-transform:uppercase; letter-spacing:2px;
+  color:var(--moss); margin-bottom:1rem;
+}
+.pickup-opt {
+  display:flex; align-items:center; gap:12px;
+  padding:13px 16px; border:1.5px solid var(--border);
+  border-radius:8px; margin-bottom:10px;
+  cursor:pointer; transition:border-color 0.2s, background 0.2s;
+}
+.pickup-opt:hover { border-color:var(--moss); background:var(--mist); }
+.pickup-opt input[type="radio"] { accent-color:var(--moss); width:16px; height:16px; flex-shrink:0; }
+.pickup-name { font-size:0.92rem; font-weight:500; color:var(--pine); }
+.pickup-desc { font-size:0.8rem; color:var(--muted); margin-top:2px; }
+
+.pay-tabs { display:flex; gap:8px; margin-bottom:1.5rem; flex-wrap:wrap; }
+.pay-tab {
+  background:var(--card); border:1.5px solid var(--border);
+  color:var(--muted); padding:9px 16px; border-radius:6px;
+  font-family:'Outfit',sans-serif; font-size:0.85rem;
+  cursor:pointer; transition:all 0.2s;
+}
+.pay-tab:hover { border-color:var(--moss); color:var(--pine); }
+.pay-tab.active { background:var(--pine); border-color:var(--pine); color:var(--mist); }
+.pay-panel { display:none; }
+.pay-panel.active { display:block; animation:pageIn 0.3s ease; }
+
+.pay-info-box {
+  background:var(--mist); border:1px solid var(--border);
+  border-radius:12px; padding:2rem; text-align:center;
+}
+.pay-info-icon { font-size:3rem; margin-bottom:1rem; }
+.pay-info-box h3 { font-family:'Libre Baskerville',serif; font-size:1.3rem; margin-bottom:0.75rem; }
+.pay-info-box p { color:var(--muted); font-size:0.9rem; line-height:1.7; }
+.pay-info-box strong { color:var(--pine); }
+.cod-note {
+  margin-top:1rem; padding:10px 14px;
+  background:rgba(196,133,42,0.1); border:1px solid rgba(196,133,42,0.3);
+  border-radius:6px; font-size:0.82rem; color:var(--muted);
+}
+.secure-note {
+  font-size:0.82rem; color:var(--muted);
+  margin-top:1rem; padding:10px 14px;
+  background:rgba(74,110,69,0.08); border-radius:6px;
+}
+
+.step-nav { display:flex; justify-content:space-between; align-items:center; margin-top:2rem; gap:1rem; }
+.btn-back {
+  background:transparent; color:var(--muted);
+  border:1.5px solid var(--border); padding:11px 22px; border-radius:4px;
+  font-family:'Outfit',sans-serif; font-size:0.9rem;
+  cursor:pointer; transition:all 0.2s;
+}
+.btn-back:hover { border-color:var(--pine); color:var(--pine); }
+
+.review-box {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:10px; padding:1.25rem 1.5rem; margin-bottom:1.25rem;
+}
+.review-box h4 {
+  font-size:0.7rem; text-transform:uppercase; letter-spacing:2px;
+  color:var(--moss); margin-bottom:0.75rem;
+}
+.review-row {
+  display:flex; justify-content:space-between;
+  padding:5px 0; border-bottom:1px solid var(--border);
+  font-size:0.88rem;
+}
+.review-row:last-child { border-bottom:none; }
+.review-row span:first-child { color:var(--muted); }
+.review-row span:last-child  { font-weight:500; color:var(--pine); }
+
+.review-item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 0; border-bottom:1px solid var(--border); font-size:0.88rem;
+}
+.review-item:last-child { border-bottom:none; }
+.ri-left { display:flex; align-items:center; gap:10px; }
+.ri-emoji { font-size:1.4rem; }
+.ri-name  { font-weight:500; color:var(--pine); }
+.ri-qty   { font-size:0.78rem; color:var(--muted); }
+.ri-price { font-family:'Libre Baskerville',serif; font-size:1rem; color:var(--pine); }
+
+.review-total-box {
+  background:var(--pine); border-radius:10px;
+  padding:1.25rem 1.5rem; margin-bottom:1.5rem; color:var(--mist);
+}
+.rt-row { display:flex; justify-content:space-between; font-size:0.87rem; padding:4px 0; color:rgba(237,243,235,0.6); }
+.rt-row.grand {
+  border-top:1px solid rgba(237,243,235,0.2); margin-top:8px; padding-top:10px;
+  font-size:1.05rem; font-weight:500; color:var(--mist);
+}
+.rt-row.grand span:last-child {
+  font-family:'Libre Baskerville',serif; font-size:1.35rem; color:var(--sage);
+}
+
+.terms-row { margin-bottom:1.5rem; }
+.terms-label { display:flex; align-items:flex-start; gap:10px; font-size:0.87rem; color:var(--muted); cursor:pointer; line-height:1.6; }
+.terms-label input { accent-color:var(--moss); margin-top:3px; flex-shrink:0; }
+.terms-label a { color:var(--moss); text-decoration:none; }
+.terms-label a:hover { text-decoration:underline; }
+
+.order-success { text-align:center; padding:3rem 2rem; }
+.success-ring {
+  width:80px; height:80px; border-radius:50%;
+  background:var(--moss); color:var(--white);
+  font-size:2.2rem; display:flex; align-items:center; justify-content:center;
+  margin:0 auto 1.5rem;
+  animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes popIn {
+  from { transform:scale(0); opacity:0; }
+  to   { transform:scale(1); opacity:1; }
+}
+.order-success h2 { font-family:'Libre Baskerville',serif; font-size:2rem; margin-bottom:1rem; }
+.order-success p { color:var(--muted); font-size:0.95rem; line-height:1.7; }
+.order-num-box {
+  display:inline-block; background:var(--mist); border:1px solid var(--border);
+  border-radius:8px; padding:10px 28px; margin:1.25rem 0;
+  font-family:'Libre Baskerville',serif; font-size:1.2rem; color:var(--pine); font-weight:700;
+}
+.success-hint { font-size:0.87rem !important; margin-top:0; }
+
+.co-summary {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:14px; padding:1.5rem; box-shadow:var(--shadow);
+  position:sticky; top:86px;
+}
+.co-summary h3 {
+  font-family:'Libre Baskerville',serif; font-size:1.3rem;
+  margin-bottom:1.25rem; padding-bottom:0.75rem;
+  border-bottom:1px solid var(--border);
+}
+.sum-item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:9px 0; border-bottom:1px solid var(--border); font-size:0.87rem;
+}
+.sum-item:last-of-type { border-bottom:none; }
+.sum-left { display:flex; align-items:center; gap:8px; }
+.sum-emoji { font-size:1.2rem; }
+.sum-name  { color:var(--pine); font-weight:500; line-height:1.3; font-size:0.85rem; }
+.sum-qty   { font-size:0.75rem; color:var(--muted); }
+.sum-price { color:var(--pine); font-weight:500; white-space:nowrap; }
+.sum-totals { margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border); }
+.sum-row { display:flex; justify-content:space-between; font-size:0.87rem; padding:3px 0; color:var(--muted); }
+.sum-row.grand { font-size:1rem; font-weight:500; color:var(--pine); border-top:1px solid var(--border); margin-top:8px; padding-top:10px; }
+.sum-row.grand span:last-child { font-family:'Libre Baskerville',serif; font-size:1.25rem; color:var(--amber); }
+
+footer { background:var(--pine); padding:3rem 2rem; text-align:center; }
+.footer-inner { max-width:500px; margin:0 auto; }
+footer .logo { margin-bottom:0.75rem; }
+footer p { color:rgba(237,243,235,0.5); font-size:0.87rem; line-height:1.7; }
+.footer-note { color:rgba(138,175,130,0.6) !important; }
+.footer-copy { margin-top:1rem; font-size:0.78rem !important; color:rgba(237,243,235,0.3) !important; }
+
+@media (max-width:900px) {
+  .hero { flex-direction:column; padding:4rem 2rem; text-align:center; min-height:auto; }
+  .hero-btns { justify-content:center; }
+  .hero-right { display:none; }
+  .about-grid { grid-template-columns:1fr; gap:2.5rem; }
+  .contact-grid { grid-template-columns:1fr; }
+  .checkout-layout { grid-template-columns:1fr; }
+  .co-summary { order:-1; position:static; }
+  .home-perks { padding:3.5rem 1.5rem; }
+  .about-body { padding:3rem 1.5rem; }
+  .contact-body { padding:3rem 1.5rem; }
+  .checkout-section { padding:2rem 1.5rem 4rem; }
+}
+
+@media (max-width:600px) {
+
+  #navbar {
+    padding: 0 1rem;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .logo {
+    font-size: 1.2rem;
+    order: 1;
+    flex: 1;
+    padding: 0;
+    line-height: 54px; 
+  }
+  .cart-btn {
+    order: 2;
+    padding: 7px 12px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    align-self: center;
+    margin: 8px 0;
+  }
+  .nav-links {
+    order: 3;
+    width: 100%;
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    border-top: 1px solid rgba(138,175,130,0.15);
+    padding: 0 0.25rem;
+    justify-content: flex-start;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links li { flex-shrink: 0; }
+  .nav-links a {
+    display: block;
+    font-size: 0.76rem;
+    letter-spacing: 0.4px;
+    padding: 9px 0.85rem;
+    white-space: nowrap;
+    border-bottom: none;
+    border-top: 2px solid transparent;
+  }
+  .nav-links a:hover,
+  .nav-links a.active {
+    color: var(--sage);
+    border-top-color: var(--sage);
+    border-bottom-color: transparent;
+  }
+
+  .hero {
+    padding: 3rem 1.25rem 3.5rem;
+    min-height: auto;
+  }
+  .hero h1 { font-size: clamp(2rem,9vw,3rem); margin-bottom: 1rem; }
+  .hero p  { font-size: 0.95rem; margin-bottom: 2rem; }
+  .hero-btns { flex-direction: column; gap: 0.75rem; align-items: stretch; }
+  .btn-primary, .btn-ghost { width: 100%; text-align: center; padding: 14px 20px; }
+
+  .page-hero { padding: 3.5rem 1.25rem; }
+  .page-hero h1 { font-size: clamp(2rem,8vw,2.8rem); }
+
+  .home-perks { padding: 3rem 1.25rem; }
+  .perks-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .perk-card { padding: 1.5rem 1.25rem; }
+
+  .home-cta { padding: 3rem 1.25rem; }
+  .home-cta h2 { font-size: 1.6rem; }
+
+  .about-body { padding: 2.5rem 1.25rem; }
+  .about-grid { gap: 2rem; margin-bottom: 3rem; }
+  .about-img { height: 240px; }
+  .about-big-emoji { font-size: 4rem; }
+  .about-text h2 { font-size: 1.5rem; }
+  .source-cards { grid-template-columns: 1fr; gap: 1rem; }
+  .sourcing-block h2 { font-size: 1.5rem; }
+
+  .menu-section { padding: 2rem 1.25rem 3.5rem; }
+  .menu-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+  .menu-filter-bar { gap: 6px; }
+  .filter-btn { padding: 8px 14px; font-size: 0.82rem; }
+
+  .contact-body { padding: 2.5rem 1.25rem; }
+  .contact-left h2 { font-size: 1.4rem; }
+  .contact-form-box { padding: 1.5rem 1.25rem; }
+  .contact-form-box h2 { font-size: 1.4rem; }
+  .form-row { grid-template-columns: 1fr; }
+  .social-row { flex-direction: column; }
+  .social-btn { width: 100%; text-align: center; padding: 11px; }
+
+  .cart-sidebar { width: 100%; max-width: 100vw; }
+
+  .checkout-section { padding: 1.5rem 1rem 3rem; }
+  .checkout-steps { gap: 0; }
+  .step-lbl { font-size: 0.68rem; }
+  .step-num { width: 30px; height: 30px; font-size: 0.8rem; }
+  .step-line { max-width: 40px; }
+  .step-title { font-size: 1.35rem; }
+  .step-nav { flex-direction: column-reverse; gap: 0.75rem; }
+  .step-nav .btn-primary,
+  .step-nav .btn-back { width: 100%; text-align: center; padding: 13px; }
+  .pay-tabs { flex-direction: column; }
+  .pay-tab { width: 100%; text-align: center; }
+  .pickup-opt { padding: 11px 12px; }
+  .co-summary { padding: 1.25rem; }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select { font-size: 1rem; }
+
+  footer { padding: 2rem 1.25rem; }
+}
+
+  </style>
+</head>
+<body>
+
+  <nav id="navbar">
+    <div class="logo">Manansalo <span>Cart</span></div>
+    <ul class="nav-links">
+      <li><a href="#" class="nav-link active" data-page="home">Home</a></li>
+      <li><a href="#" class="nav-link" data-page="about">About</a></li>
+      <li><a href="#" class="nav-link" data-page="menu">Menu</a></li>
+      <li><a href="#" class="nav-link" data-page="contact">Find Us</a></li>
+    </ul>
+    <button class="cart-btn" id="cart-toggle">
+      <span>🛒</span> Order
+      <span class="cart-badge" id="cart-badge">0</span>
+    </button>
+  </nav>
+
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <aside class="cart-sidebar" id="cart-sidebar">
+    <div class="cart-header">
+      <h2>Your Order</h2>
+      <button class="close-cart" id="close-cart">✕</button>
+    </div>
+    <div class="cart-items" id="cart-items">
+      <div class="cart-empty" id="cart-empty">
+        <div class="empty-icon">☕</div>
+        <p>Nothing here yet.<br>Pick a drink!</p>
+      </div>
+    </div>
+    <div class="cart-footer" id="cart-footer" style="display:none;">
+      <div class="cart-total-row">
+        <span>Subtotal</span>
+        <span id="cart-total">₱0</span>
+      </div>
+      <button class="checkout-btn" id="checkout-btn">Proceed to Order →</button>
+      <button class="clear-btn" id="clear-cart">Clear Order</button>
+    </div>
+  </aside>
+
+  <div id="page-home" class="page active">
+
+    <section class="hero">
+      <div class="hero-bg-text">MANANSALO</div>
+      <div class="hero-content">
+        <div class="hero-tag">☁️ Baguio · Benguet Highlands</div>
+        <h1>Sip the <em>Mountain.</em><br>Feel the Mist.</h1>
+        <p>A mobile coffee & tea cart bringing you specialty drinks made from locally sourced beans and herbs — brewed right at your doorstep.</p>
+        <div class="hero-btns">
+          <button class="btn-primary" data-goto="menu">See the Menu</button>
+          <button class="btn-ghost" data-goto="about">About</button>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="drink-showcase">
+          <div class="drink-card-float dc1">
+            <span class="dc-emoji">☕</span>
+            <span class="dc-name">Benguet Pour Over</span>
+          </div>
+          <div class="drink-card-float dc2">
+            <span class="dc-emoji">🍵</span>
+            <span class="dc-name">Mountain Oolong</span>
+          </div>
+          <div class="drink-card-float dc3">
+            <span class="dc-emoji">🥛</span>
+            <span class="dc-name">Strawberry Latte</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-perks">
+      <div class="perks-label">Why Manansalo Cart</div>
+      <h2 class="perks-title">More Than a Cup of Coffee</h2>
+      <div class="perks-grid">
+        <div class="perk-card">
+          <div class="perk-icon">🏔️</div>
+          <h3>Locally Sourced</h3>
+          <p>Every bean and leaf traced to farms in Baguio City and the Benguet highlands — supporting local farmers with every sip.</p>
+        </div>
+        <div class="perk-card">
+          <div class="perk-icon">🚐</div>
+          <h3>We Come to You</h3>
+          <p>Our mobile cart travels to events, markets, offices, and communities. No need to find us — we find you.</p>
+        </div>
+        <div class="perk-card">
+          <div class="perk-icon">🌿</div>
+          <h3>Seasonal Menus</h3>
+          <p>Our drink list changes with the harvest. Expect fresh flavors, local botanicals, and limited specials every season.</p>
+        </div>
+        <div class="perk-card">
+          <div class="perk-icon">💚</div>
+          <h3>Zero Waste</h3>
+          <p>Compostable cups, bamboo straws, and coffee grounds returned to partner farms as compost. Every cup counts.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="strip-band">
+      <div class="strip-inner">
+        <span>Benguet Arabica</span><span class="dot">·</span>
+        <span>Mountain Oolong</span><span class="dot">·</span>
+        <span>Strawberry Latte</span><span class="dot">·</span>
+        <span>Cold Brew</span><span class="dot">·</span>
+        <span>Matcha</span><span class="dot">·</span>
+        <span>Hibiscus Tea</span><span class="dot">·</span>
+        <span>Benguet Arabica</span><span class="dot">·</span>
+        <span>Mountain Oolong</span><span class="dot">·</span>
+      </div>
+    </div>
+
+    <section class="home-cta">
+      <div class="cta-inner">
+        <div class="cta-emoji">🚐</div>
+        <h2>Book the Cart for Your Next Event</h2>
+        <p>Weddings, markets, corporate events, school fairs — Manansalo Cart is the perfect mobile brew station.</p>
+        <button class="btn-primary" data-goto="contact">Get in Touch</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="page-about" class="page">
+    <div class="page-hero about-hero">
+      <div class="hero-tag">Est. 2022 · Baguio City</div>
+      <h1>Born in the<br><em>Highlands.</em></h1>
+      <p>A two-person cart with a big love for local coffee and mountain tea.</p>
+    </div>
+
+    <section class="about-body">
+      <div class="about-grid">
+        <div class="about-visual">
+          <div class="about-img">
+            <span class="about-big-emoji">🚐</span>
+            <div class="about-img-caption">Manansalo Cart on location · Baguio City</div>
+          </div>
+        </div>
+        <div class="about-text">
+          <div class="about-section-label">The Story</div>
+          <h2>From a foldable table to a fully equipped mobile cart</h2>
+          <p>Manansalo Cart started in 2022 when siblings Lara and Nico Ballesteros began selling coffee at the Baguio Public Market weekend bazaar — just a small table, a hand grinder, and beans bought directly from a neighbor's farm in Atok, Benguet.</p>
+          <p>The lines grew long. People kept coming back — not just for the coffee, but for the experience. Within a year, they built a full mobile cart and expanded the menu to include Benguet mountain teas, seasonal fruit lattes, and cold brews.</p>
+          <p>Today, Manansalo Cart serves over 300 cups a weekend across rotating locations in Baguio and the lowlands — always seasonal, always local, always worth the wait.</p>
+        </div>
+      </div>
+
+      <div class="sourcing-block">
+        <div class="about-section-label">Where We Source</div>
+        <h2>Straight From the Farm</h2>
+        <div class="source-cards">
+          <div class="source-card">
+            <div class="source-icon">☕</div>
+            <h4>Atok, Benguet</h4>
+            <p>Our primary coffee farm at 1,700m altitude. Arabica beans grown in rich, volcanic soil with a distinct chocolatey sweetness.</p>
+          </div>
+          <div class="source-card">
+            <div class="source-icon">🍵</div>
+            <h4>La Trinidad, Benguet</h4>
+            <p>Home to our tea herb partner garden. Oolong, lemongrass, and pandan sourced fresh every week.</p>
+          </div>
+          <div class="source-card">
+            <div class="source-icon">🍓</div>
+            <h4>Baguio City Market</h4>
+            <p>Seasonal fruits — strawberries, dalandan, and local citrus — from the famous Baguio Public Market.</p>
+          </div>
+          <div class="source-card">
+            <div class="source-icon">🌸</div>
+            <h4>Kabayan, Benguet</h4>
+            <p>Dried hibiscus and mountain wildflowers used in our herbal teas and signature infusions.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-block">
+        <div class="about-section-label">Our Journey</div>
+        <h2>How We Grew</h2>
+        <p class="history-sub">From a folding table at the market to Baguio's most-loved mobile brew cart — here's the story, year by year.</p>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-year">Early 2022 — The Beginning</div>
+            <h4>A Table, a Grinder, and a Dream</h4>
+            <p>Siblings Lara and Nico Ballesteros set up a small folding table at the Baguio Public Market weekend bazaar. Armed with a hand grinder and beans bought directly from a neighbor's farm in Atok, Benguet, they brewed their first cup for strangers — and sold out by 9 AM.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">Mid 2022 — First Recognition</div>
+            <h4>Word Spreads Up the Mountain</h4>
+            <p>Regulars started lining up before the table was even set up. A feature in a local Baguio Facebook community group brought a wave of new faces. Lara and Nico began experimenting with Benguet mountain teas to expand beyond coffee.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2023 — The Cart Is Born</div>
+            <h4>Going Mobile, Going Bigger</h4>
+            <p>After saving through a year of weekend market runs, the Ballesteros siblings commissioned a custom-built mobile cart. They added a proper espresso machine, a pour-over bar, and a seasonal fruit latte lineup featuring Baguio strawberries and dalandan. The Manansalo Cart name was officially launched.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">Late 2023 — Partnership & Community</div>
+            <h4>Rooted in the Highlands</h4>
+            <p>Manansalo Cart formalized sourcing partnerships with three farms in Atok, a herb garden cooperative in La Trinidad, and a wildflower honey producer in Kabayan. A zero-waste policy was adopted — compostable cups, bamboo straws, and coffee grounds returned to partner farms.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2024 — Reaching the Lowlands</div>
+            <h4>Beyond Baguio</h4>
+            <p>The cart began traveling to community fairs, corporate events, and pop-ups in La Union and Metro Manila — bringing highland flavors to the lowlands. Online pre-ordering was introduced, cutting wait times in half and letting regulars skip the queue.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">Today — 300+ Cups Every Weekend</div>
+            <h4>Still Small. Still Local. Still Worth the Wait.</h4>
+            <p>Manansalo Cart now serves over 300 cups per weekend across rotating locations. Every drink is still made to order. Every ingredient still traced to a specific farm. Lara still runs the espresso machine. Nico still does the pour-overs. And the line still forms before they open.</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <div id="page-menu" class="page">
+    <div class="page-hero menu-hero">
+      <div class="hero-tag">Freshly Brewed · Made to Order</div>
+      <h1>Our Menu</h1>
+      <p>All drinks made with Baguio & Benguet-sourced ingredients.</p>
+      <p>Sizes: Small (8oz) · Regular (12oz).</p>
+    </div>
+
+    <section class="menu-section">
+      <div class="menu-filter-bar">
+        <button class="filter-btn active" data-filter="all">All Drinks</button>
+        <button class="filter-btn" data-filter="coffee">☕ Coffee</button>
+        <button class="filter-btn" data-filter="tea">🍵 Tea</button>
+        <button class="filter-btn" data-filter="special">✨ Specials</button>
+      </div>
+
+      <div class="menu-grid" id="menu-grid"></div>
+    </section>
+  </div>
+
+  <div id="page-contact" class="page">
+    <div class="page-hero contact-hero">
+      <div class="hero-tag">Mobile · Always Moving</div>
+      <h1>Find the Cart</h1>
+      <p>We move around — here's how to track us down and get in touch.</p>
+    </div>
+
+    <section class="contact-body">
+      <div class="contact-grid">
+
+        <div class="contact-left">
+          <h2>Where We Park</h2>
+          <div class="location-cards">
+            <div class="location-card">
+              <div class="loc-day">Saturday</div>
+              <div class="loc-name">🏬 Baguio Public Market</div>
+              <div class="loc-time">6:00 AM – 12:00 PM</div>
+            </div>
+            <div class="location-card">
+              <div class="loc-day">Sunday</div>
+              <div class="loc-name">🌿 Burnham Park Weekend Fair</div>
+              <div class="loc-time">7:00 AM – 2:00 PM</div>
+            </div>
+            <div class="location-card">
+              <div class="loc-day">Weekdays</div>
+              <div class="loc-name">📍 Rotating — follow us on Instagram</div>
+              <div class="loc-time">@manansalocart for daily updates</div>
+            </div>
+          </div>
+
+          <div class="contact-info-list">
+            <div class="info-row">
+              <div class="info-ico">📞</div>
+              <div>
+                <div class="info-label">Phone / Viber</div>
+                <div class="info-val">+63 912 345 6789</div>
+              </div>
+            </div>
+            <div class="info-row">
+              <div class="info-ico">✉️</div>
+              <div>
+                <div class="info-label">Email</div>
+                <div class="info-val"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="620a070e0e0d220a0b050306010310164c120a">[email&#160;protected]</a></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="social-row">
+            <button class="social-btn">📘 Facebook</button>
+            <button class="social-btn">📸 Instagram</button>
+            <button class="social-btn">🎵 TikTok</button>
+          </div>
+
+          <div class="map-box">
+            <div>🗺️</div>
+            <p>Baguio City, Benguet</p>
+            <p class="map-sub">Cordillera Administrative Region</p>
+          </div>
+        </div>
+
+        <div class="contact-right">
+          <div class="contact-form-box">
+            <h2>Send a Message</h2>
+            <p class="form-sub">For bookings, wholesale, or just to say hi!</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label>First Name *</label>
+                <input type="text" id="c-fname" placeholder="Juan" />
+              </div>
+              <div class="form-group">
+                <label>Last Name *</label>
+                <input type="text" id="c-lname" placeholder="dela Cruz" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Email *</label>
+              <input type="email" id="c-email" placeholder="juan@email.com" />
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" placeholder="+63 912 000 0000" />
+            </div>
+            <div class="form-group">
+              <label>Topic</label>
+              <select>
+                <option>General Inquiry</option>
+                <option>Event Booking</option>
+                <option>Wholesale / Catering</option>
+                <option>Partnership</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Message *</label>
+              <textarea id="c-msg" placeholder="Tell us about your event, where you found us, or anything else..."></textarea>
+            </div>
+            <button class="btn-primary full-width" id="send-btn">Send Message ✉️</button>
+            <div class="success-msg" id="contact-success">✅ Got it! We'll get back to you within 24 hours.</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <div id="page-checkout" class="page">
+    <div class="page-hero checkout-hero">
+      <div class="hero-tag">Secure · Simple</div>
+      <h1>Complete Your Order</h1>
+      <p>Pre-order online and pick up at the cart — no waiting in line!</p>
+    </div>
+
+    <section class="checkout-section">
+      <div class="checkout-steps">
+        <div class="step active" id="step-ind-1"><div class="step-num">1</div><div class="step-lbl">Details</div></div>
+        <div class="step-line" id="line-1"></div>
+        <div class="step" id="step-ind-2"><div class="step-num">2</div><div class="step-lbl">Payment</div></div>
+        <div class="step-line" id="line-2"></div>
+        <div class="step" id="step-ind-3"><div class="step-num">3</div><div class="step-lbl">Confirm</div></div>
+      </div>
+
+      <div class="checkout-layout">
+        <div class="checkout-forms">
+
+          <div class="co-panel active" id="co-step-1">
+            <h2 class="step-title">Your Details</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label>First Name *</label>
+                <input type="text" id="co-fname" placeholder="Juan" />
+              </div>
+              <div class="form-group">
+                <label>Last Name *</label>
+                <input type="text" id="co-lname" placeholder="dela Cruz" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Email *</label>
+              <input type="email" id="co-email" placeholder="juan@email.com" />
+            </div>
+            <div class="form-group">
+              <label>Phone / Viber *</label>
+              <input type="tel" id="co-phone" placeholder="+63 912 000 0000" />
+            </div>
+
+            <div class="pickup-options">
+              <div class="pickup-label">📍 Pickup Location</div>
+              <label class="pickup-opt">
+                <input type="radio" name="pickup" value="market" checked />
+                <div class="pickup-body">
+                  <div class="pickup-name">Baguio Public Market</div>
+                  <div class="pickup-desc">Saturday · 6:00 AM – 12:00 PM</div>
+                </div>
+              </label>
+              <label class="pickup-opt">
+                <input type="radio" name="pickup" value="burnham" />
+                <div class="pickup-body">
+                  <div class="pickup-name">Burnham Park Weekend Fair</div>
+                  <div class="pickup-desc">Sunday · 7:00 AM – 2:00 PM</div>
+                </div>
+              </label>
+              <label class="pickup-opt">
+                <input type="radio" name="pickup" value="event" />
+                <div class="pickup-body">
+                  <div class="pickup-name">Special Event / Delivery</div>
+                  <div class="pickup-desc">Contact us first — +63 912 345 6789</div>
+                </div>
+              </label>
+            </div>
+
+            <div class="form-group" style="margin-top:1.5rem;">
+              <label>Special Instructions</label>
+              <input type="text" id="co-notes" placeholder="Less sugar, extra hot, oat milk, etc." />
+            </div>
+            <button class="btn-primary full-width" id="next-step-2" style="margin-top:2rem;">Continue to Payment →</button>
+          </div>
+
+          <div class="co-panel" id="co-step-2">
+            <h2 class="step-title">Payment Method</h2>
+            <div class="pay-tabs">
+              <button class="pay-tab active" data-pay="gcash">📱 GCash</button>
+              <button class="pay-tab" data-pay="card">💳 Card</button>
+              <button class="pay-tab" data-pay="cod">💵 Pay at Cart</button>
+            </div>
+
+            <div class="pay-panel active" id="pay-gcash">
+              <div class="pay-info-box">
+                <div class="pay-info-icon">📱</div>
+                <h3>Pay via GCash</h3>
+                <p>Send payment to <strong>09123456789</strong> (Lara B.) after placing your order. Screenshot your GCash confirmation and send to our FB page.</p>
+                <div class="form-group" style="margin-top:1.5rem; text-align:left;">
+                  <label>Your GCash Number *</label>
+                  <input type="tel" id="co-gcash" placeholder="+63 912 000 0000" />
+                </div>
+              </div>
+            </div>
+            <div class="pay-panel" id="pay-card">
+              <div class="form-group">
+                <label>Cardholder Name *</label>
+                <input type="text" id="co-card-name" placeholder="Juan dela Cruz" />
+              </div>
+              <div class="form-group">
+                <label>Card Number *</label>
+                <input type="text" id="co-card-num" placeholder="1234 5678 9012 3456" maxlength="19" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Expiry *</label>
+                  <input type="text" id="co-card-exp" placeholder="MM / YY" maxlength="7" />
+                </div>
+                <div class="form-group">
+                  <label>CVV *</label>
+                  <input type="text" id="co-card-cvv" placeholder="•••" maxlength="4" />
+                </div>
+              </div>
+              <div class="secure-note">🔒 Encrypted and secure. We never store card data.</div>
+            </div>
+            <div class="pay-panel" id="pay-cod">
+              <div class="pay-info-box">
+                <div class="pay-info-icon">💵</div>
+                <h3>Pay at the Cart</h3>
+                <p>Show your order confirmation number when you arrive at our cart. We accept cash only at the pickup counter.</p>
+                <div class="cod-note">Please arrive within your pickup window. Orders are held for 30 minutes.</div>
+              </div>
+            </div>
+
+            <div class="step-nav">
+              <button class="btn-back" id="back-1">← Back</button>
+              <button class="btn-primary" id="next-step-3">Review Order →</button>
+            </div>
+          </div>
+
+          <div class="co-panel" id="co-step-3">
+            <h2 class="step-title">Review & Confirm</h2>
+            <div id="review-details"></div>
+            <div id="review-items"></div>
+            <div id="review-total"></div>
+            <div class="terms-row">
+              <label class="terms-label">
+                <input type="checkbox" id="co-terms" />
+                <span>I agree to the <a href="#">Terms & Conditions</a> and <a href="#">Privacy Policy</a></span>
+              </label>
+            </div>
+            <div class="step-nav">
+              <button class="btn-back" id="back-2">← Back</button>
+              <button class="btn-primary" id="place-order">☕ Place Order</button>
+            </div>
+          </div>
+
+          <div class="co-panel" id="co-success">
+            <div class="order-success">
+              <div class="success-ring">✓</div>
+              <h2>Order Confirmed!</h2>
+              <p>Your drinks are reserved. Show your order number at the cart pickup counter.</p>
+              <div class="order-num-box" id="order-num-box"></div>
+              <p class="success-hint">We'll send a reminder to your email before pickup. See you at the cart! ☕🚐</p>
+              <button class="btn-primary" id="back-to-menu" style="margin-top:2rem;">Back to Menu</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="co-summary">
+          <h3>Order Summary</h3>
+          <div id="co-summary-items"></div>
+          <div id="co-summary-total"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="logo">Manansalo <span>Cart</span></div>
+      <p>Mobile specialty coffee & tea · Baguio City & Benguet</p>
+      <p class="footer-note">Beans sourced from local highland farms. Brewed with love.</p>
+            <p class="footer-copy">© 2024 Manansalo Cart · Baguio City, Benguet</p>
+    </div>
+  </footer>
+
+  <script>
+
+const menuItems = [
+  {
+    id: 1, category: 'coffee',
+    name: 'Benguet Pour Over',
+    desc: 'Single-origin Arabica from Atok, Benguet. Brewed slowly for a clean, bright cup with chocolatey notes.',
+    tags: ['Single-Origin', 'Arabica', 'Baguio Beans'],
+    price: 120, size: 'Reg (12oz)',
+    badge: 'Signature', emoji: '☕', bg: '#EDF3EB',
+    img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&q=80'
+  },
+  {
+    id: 2, category: 'coffee',
+    name: 'Strawberry Café Latte',
+    desc: 'Espresso pulled from Benguet beans, steamed milk, and fresh Baguio strawberry purée. Sweet and bold.',
+    tags: ['Latte', 'Baguio Strawberry', 'Seasonal'],
+    price: 135, size: 'Reg (12oz)',
+    badge: 'Fan Fave', emoji: '🍓', bg: '#FFF0F3',
+    img: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=600&q=80'
+  },
+  {
+    id: 3, category: 'coffee',
+    name: 'Benguet Cold Brew',
+    desc: 'Steeped for 18 hours in cold water. Smooth, low-acid, and intensely coffee-forward. Served over ice.',
+    tags: ['Cold Brew', 'Low Acid', 'Arabica'],
+    price: 140, size: 'Reg (12oz)',
+    badge: '', emoji: '🧊', bg: '#E8F0FB',
+    img: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=600&q=80'
+  },
+  {
+    id: 4, category: 'coffee',
+    name: 'Dirty Ube Latte',
+    desc: 'Rich ube cream layered over a double espresso shot from Benguet Arabica. A Filipino-inspired treat.',
+    tags: ['Espresso', 'Ube', 'Local Twist'],
+    price: 145, size: 'Reg (12oz)',
+    badge: 'Local Special', emoji: '💜', bg: '#F3EEFF',
+    img: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=600&q=80'
+  },
+  {
+    id: 5, category: 'tea',
+    name: 'Mountain Oolong',
+    desc: 'Lightly oxidised oolong sourced from La Trinidad, Benguet. Floral, smooth, and warming. Pure highland character.',
+    tags: ['Oolong', 'La Trinidad', 'No Sugar'],
+    price: 105, size: 'Reg (12oz)',
+    badge: 'Signature', emoji: '🍵', bg: '#FDFBF0',
+    img: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=600&q=80'
+  },
+  {
+    id: 6, category: 'tea',
+    name: 'Hibiscus Cooler',
+    desc: 'Dried hibiscus petals from Kabayan, Benguet steeped cold with local honey and a squeeze of dalandan.',
+    tags: ['Hibiscus', 'Iced', 'Kabayan'],
+    price: 110, size: 'Reg (12oz)',
+    badge: '', emoji: '🌺', bg: '#FFF0F3',
+    img: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=600&q=80'
+  },
+  {
+    id: 7, category: 'tea',
+    name: 'Lemongrass Ginger',
+    desc: 'A warming herbal blend of fresh lemongrass and ginger from Benguet farms. Great for cold Baguio mornings.',
+    tags: ['Herbal', 'Hot', 'Wellness'],
+    price: 98, size: 'Reg (12oz)',
+    badge: '', emoji: '🌿', bg: '#EDF3EB',
+    img: 'https://delightfulplate.com/wp-content/uploads/2020/12/Lemongrass-Ginger-Tea-Tra-gung-sa-1.jpg'
+  },
+  {
+    id: 8, category: 'tea',
+    name: 'Pandan Milk Tea',
+    desc: 'Freshly brewed pandan leaf tea with creamy oat milk and brown sugar syrup. Subtle, aromatic, and addictive.',
+    tags: ['Milk Tea', 'Pandan', 'Oat Milk'],
+    price: 120, size: 'Reg (12oz)',
+    badge: 'Fan Fave', emoji: '🥛', bg: '#F0FFF4',
+    img: 'https://images.unsplash.com/photo-1558857563-b371033873b8?w=600&q=80'
+  },
+  {
+    id: 9, category: 'special',
+    name: 'Baguio Fog Latte',
+    desc: 'Benguet espresso, steamed oat milk, pandan syrup, and a pinch of local sea salt. Inspired by Baguio mornings.',
+    tags: ['Signature', 'Pandan', 'Sea Salt'],
+    price: 155, size: 'Reg (12oz)',
+    badge: '⭐ House Specialty', emoji: '🌫️', bg: '#EDF3EB',
+    img: 'https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=600&q=80'
+  },
+  {
+    id: 10, category: 'special',
+    name: 'Atok Honey Brew',
+    desc: 'Pour-over Arabica sweetened with raw wildflower honey sourced directly from Atok beekeepers. No sugar added.',
+    tags: ['Pour Over', 'Raw Honey', 'Atok'],
+    price: 148, size: 'Reg (12oz)',
+    badge: 'Limited', emoji: '🍯', bg: '#FFF8E7',
+    img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=80'
+  },
+  {
+    id: 11, category: 'special',
+    name: 'Strawberry Matcha',
+    desc: 'Ceremonial-grade matcha blended with fresh Baguio strawberry milk. The cart\'s most photographed drink.',
+    tags: ['Matcha', 'Baguio Strawberry', 'Aesthetic'],
+    price: 150, size: 'Reg (12oz)',
+    badge: '📸 Most Ordered', emoji: '🍓', bg: '#F0FFF4',
+    img: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=600&q=80'
+  },
+];
+
+let cart = [];
+let activeFilter = 'all';
+let payMethod = 'gcash';
+let currentStep = 1;
+
+const cartSidebar = document.getElementById('cart-sidebar');
+const cartOverlay = document.getElementById('cart-overlay');
+const cartBadgeEl = document.getElementById('cart-badge');
+const cartItemsEl = document.getElementById('cart-items');
+const cartEmptyEl = document.getElementById('cart-empty');
+const cartFooter  = document.getElementById('cart-footer');
+const cartTotalEl = document.getElementById('cart-total');
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  const link = document.querySelector(`.nav-link[data-page="${id}"]`);
+  if (page) page.classList.add('active');
+  if (link) link.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.nav-link').forEach(a =>
+  a.addEventListener('click', e => { e.preventDefault(); showPage(a.dataset.page); })
+);
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-goto]');
+  if (btn) showPage(btn.dataset.goto);
+});
+
+function renderMenu(filter) {
+  const grid = document.getElementById('menu-grid');
+  grid.innerHTML = '';
+  const items = filter === 'all' ? menuItems : menuItems.filter(i => i.category === filter);
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'menu-card';
+    card.innerHTML = `
+      <div class="menu-card-img">
+        <img src="${item.img}" alt="${item.name}" loading="lazy" onerror="this.parentElement.style.background='${item.bg}';this.style.display='none';" />
+        ${item.badge ? `<span class="menu-card-badge">${item.badge}</span>` : ''}
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">${item.category.toUpperCase()} · ${item.size}</div>
+        <h3>${item.name}</h3>
+        <p>${item.desc}</p>
+        <div class="menu-card-tags">
+          ${item.tags.map(t => `<span class="menu-tag">${t}</span>`).join('')}
+        </div>
+        <div class="menu-card-footer">
+          <div class="menu-price">₱${item.price} <small>/ cup</small></div>
+          <button class="add-btn" data-id="${item.id}">Add to Order</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+renderMenu('all');
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderMenu(btn.dataset.filter);
+  });
+});
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.add-btn');
+  if (!btn) return;
+  const id = parseInt(btn.dataset.id);
+  const item = menuItems.find(i => i.id === id);
+  if (!item) return;
+  const ex = cart.find(c => c.id === id);
+  if (ex) ex.qty++;
+  else cart.push({ ...item, qty: 1 });
+  updateCart();
+  bumpBadge();
+  openCart();
+  const orig = btn.textContent;
+  btn.textContent = '✓ Added!';
+  btn.style.background = '#4A6E45';
+  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1500);
+});
+
+function openCart()  {
+  cartSidebar.classList.add('open');
+  cartOverlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeCart() {
+  cartSidebar.classList.remove('open');
+  cartOverlay.classList.remove('show');
+  document.body.style.overflow = '';
+}
+document.getElementById('cart-toggle').addEventListener('click', openCart);
+document.getElementById('close-cart').addEventListener('click', closeCart);
+cartOverlay.addEventListener('click', closeCart);
+
+function updateCart() {
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+  cartBadgeEl.textContent = count;
+  cartTotalEl.textContent = '₱' + total.toLocaleString();
+
+  cartEmptyEl.style.display = cart.length ? 'none' : 'flex';
+  cartFooter.style.display  = cart.length ? 'block' : 'none';
+
+  cartItemsEl.querySelectorAll('.cart-item').forEach(el => el.remove());
+  cart.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'cart-item';
+    el.innerHTML = `
+      <div class="ci-emoji">${item.emoji}</div>
+      <div class="ci-info">
+        <div class="ci-name">${item.name}</div>
+        <div class="ci-sub">₱${item.price} / cup · ${item.size}</div>
+        <div class="ci-controls">
+          <button class="qty-btn" data-action="dec" data-id="${item.id}">−</button>
+          <span class="qty-num">${item.qty}</span>
+          <button class="qty-btn" data-action="inc" data-id="${item.id}">+</button>
+          <button class="rm-btn" data-action="remove" data-id="${item.id}">Remove</button>
+        </div>
+      </div>`;
+    cartItemsEl.insertBefore(el, cartEmptyEl);
+  });
+  if (document.getElementById('page-checkout')?.classList.contains('active')) {
+    renderCheckoutSummary();
+  }
+}
+
+cartItemsEl.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const id  = parseInt(btn.dataset.id);
+  const idx = cart.findIndex(i => i.id === id);
+  if (idx === -1) return;
+  if (btn.dataset.action === 'inc') cart[idx].qty++;
+  else if (btn.dataset.action === 'dec') { cart[idx].qty--; if (cart[idx].qty <= 0) cart.splice(idx,1); }
+  else if (btn.dataset.action === 'remove') cart.splice(idx,1);
+  updateCart();
+});
+
+document.getElementById('clear-cart').addEventListener('click', () => { cart = []; updateCart(); });
+
+function bumpBadge() {
+  cartBadgeEl.classList.remove('bump');
+  void cartBadgeEl.offsetWidth;
+  cartBadgeEl.classList.add('bump');
+  setTimeout(() => cartBadgeEl.classList.remove('bump'), 400);
+}
+
+document.getElementById('checkout-btn').addEventListener('click', () => {
+  if (!cart.length) return;
+  closeCart();
+  currentStep = 1;
+  goToStep(1);
+  showPage('checkout');
+  setTimeout(renderCheckoutSummary, 0);
+});
+
+function goToStep(step) {
+  document.querySelectorAll('.co-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('co-step-' + step);
+  if (panel) panel.classList.add('active');
+
+  for (let i = 1; i <= 3; i++) {
+    const ind = document.getElementById('step-ind-' + i);
+    if (!ind) continue;
+    ind.classList.remove('active', 'done');
+    if (i < step)  ind.classList.add('done');
+    if (i === step) ind.classList.add('active');
+  }
+  for (let i = 1; i <= 2; i++) {
+    const line = document.getElementById('line-' + i);
+    if (line) line.classList.toggle('done', i < step);
+  }
+  currentStep = step;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('next-step-2').addEventListener('click', () => {
+  if (!validateFields(['co-fname','co-lname','co-email','co-phone'])) return;
+  goToStep(2);
+});
+document.getElementById('next-step-3').addEventListener('click', () => {
+  if (payMethod === 'gcash' && !validateFields(['co-gcash'])) return;
+  if (payMethod === 'card'  && !validateFields(['co-card-name','co-card-num','co-card-exp','co-card-cvv'])) return;
+  buildReview();
+  goToStep(3);
+});
+document.getElementById('back-1').addEventListener('click', () => goToStep(1));
+document.getElementById('back-2').addEventListener('click', () => goToStep(2));
+
+document.querySelectorAll('.pay-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.pay-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pay-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    payMethod = tab.dataset.pay;
+    document.getElementById('pay-' + payMethod).classList.add('active');
+  });
+});
+
+const cardNum = document.getElementById('co-card-num');
+if (cardNum) cardNum.addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g,'').slice(0,16);
+  e.target.value = v.replace(/(.{4})/g,'$1 ').trim();
+});
+const cardExp = document.getElementById('co-card-exp');
+if (cardExp) cardExp.addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g,'').slice(0,4);
+  if (v.length >= 3) v = v.slice(0,2) + ' / ' + v.slice(2);
+  e.target.value = v;
+});
+
+function buildReview() {
+  const fname   = val('co-fname');
+  const lname   = val('co-lname');
+  const email   = val('co-email');
+  const phone   = val('co-phone');
+  const notes   = val('co-notes');
+  const pickup  = document.querySelector('input[name="pickup"]:checked')?.value || 'market';
+  const pickupLabel = { market:'Baguio Public Market (Sat)', burnham:'Burnham Park Fair (Sun)', event:'Special Event / Delivery' }[pickup];
+  const payLabel = { gcash:'GCash', card:'Credit / Debit Card', cod:'Pay at Cart (Cash)' }[payMethod];
+
+  document.getElementById('review-details').innerHTML = `
+    <div class="review-box">
+      <h4>Order Details</h4>
+      <div class="review-row"><span>Name</span><span>${fname} ${lname}</span></div>
+      <div class="review-row"><span>Email</span><span>${email}</span></div>
+      <div class="review-row"><span>Phone</span><span>${phone}</span></div>
+      <div class="review-row"><span>Pickup</span><span>${pickupLabel}</span></div>
+      <div class="review-row"><span>Payment</span><span>${payLabel}</span></div>
+      ${notes ? `<div class="review-row"><span>Special Notes</span><span>${notes}</span></div>` : ''}
+    </div>`;
+
+  const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+
+  document.getElementById('review-items').innerHTML = `
+    <div class="review-box">
+      <h4>Your Drinks (${cart.reduce((s,i)=>s+i.qty,0)} items)</h4>
+      ${cart.map(item => `
+        <div class="review-item">
+          <div class="ri-left">
+            <span class="ri-emoji">${item.emoji}</span>
+            <div>
+              <div class="ri-name">${item.name}</div>
+              <div class="ri-qty">x${item.qty} · ₱${item.price} each</div>
+            </div>
+          </div>
+          <div class="ri-price">₱${(item.price * item.qty).toLocaleString()}</div>
+        </div>`).join('')}
+    </div>`;
+
+  document.getElementById('review-total').innerHTML = `
+    <div class="review-total-box">
+      <div class="rt-row"><span>Subtotal (${cart.reduce((s,i)=>s+i.qty,0)} drinks)</span><span>₱${subtotal.toLocaleString()}</span></div>
+      <div class="rt-row"><span>Cart Service Fee</span><span>Free</span></div>
+      <div class="rt-row grand"><span>Total</span><span>₱${subtotal.toLocaleString()}</span></div>
+    </div>`;
+}
+
+document.getElementById('place-order').addEventListener('click', () => {
+  if (!document.getElementById('co-terms').checked) {
+    alert('Please agree to the Terms & Conditions.');
+    return;
+  }
+  const orderNum = 'HG-' + Date.now().toString().slice(-5);
+  document.getElementById('order-num-box').textContent = 'Order #' + orderNum;
+
+  document.querySelectorAll('.co-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('co-success').classList.add('active');
+
+  for (let i=1;i<=3;i++) {
+    const ind = document.getElementById('step-ind-' + i);
+    if (ind) { ind.classList.remove('active'); ind.classList.add('done'); }
+  }
+  for (let i=1;i<=2;i++) {
+    const l = document.getElementById('line-' + i);
+    if (l) l.classList.add('done');
+  }
+
+  cart = [];
+  updateCart();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+document.getElementById('back-to-menu').addEventListener('click', () => showPage('menu'));
+
+function renderCheckoutSummary() {
+  const si = document.getElementById('co-summary-items');
+  const st = document.getElementById('co-summary-total');
+  if (!si || !st) return;
+
+  if (!cart.length) {
+    si.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;text-align:center;padding:1rem 0;">No items yet</p>';
+    st.innerHTML = '';
+    return;
+  }
+
+  si.innerHTML = cart.map(item => `
+    <div class="sum-item">
+      <div class="sum-left">
+        <span class="sum-emoji">${item.emoji}</span>
+        <div>
+          <div class="sum-name">${item.name}</div>
+          <div class="sum-qty">x${item.qty}</div>
+        </div>
+      </div>
+      <div class="sum-price">₱${(item.price * item.qty).toLocaleString()}</div>
+    </div>`).join('');
+
+  const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+  st.innerHTML = `
+    <div class="sum-totals">
+      <div class="sum-row"><span>Subtotal</span><span>₱${subtotal.toLocaleString()}</span></div>
+      <div class="sum-row"><span>Cart Fee</span><span>Free</span></div>
+      <div class="sum-row grand"><span>Total</span><span>₱${subtotal.toLocaleString()}</span></div>
+    </div>`;
+}
+
+document.getElementById('send-btn').addEventListener('click', () => {
+  if (!validateFields(['c-fname','c-email','c-msg'])) return;
+  const ok = document.getElementById('contact-success');
+  ok.style.display = 'block';
+  document.querySelectorAll('#page-contact input, #page-contact textarea').forEach(el => el.value = '');
+  setTimeout(() => ok.style.display = 'none', 5000);
+});
+
+function val(id) { return document.getElementById(id)?.value.trim() || ''; }
+function validateFields(ids) {
+  let ok = true;
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || !el.value.trim()) {
+      if (el) {
+        el.style.borderColor = '#c44';
+        if (ok) el.focus();
+        setTimeout(() => el.style.borderColor = '', 2500);
+      }
+      ok = false;
+    }
+  });
+  return ok;
+}
+
+updateCart();
+
+  </script>
+</body>
+</html>
